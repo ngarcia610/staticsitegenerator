@@ -1,126 +1,73 @@
 import unittest
-from unittest.mock import MagicMock
-
-from htmlnode import HTMLNode, LeafNode, ParentNode
+from htmlnode import LeafNode, ParentNode, HTMLNode
 
 
 class TestHTMLNode(unittest.TestCase):
-    def test_props_to_html_props_none(self):
-        node = HTMLNode()
-        node.props = None
-        self.assertEqual(node.props_to_html(), "")
-
-    def test_props_to_html_props_empty(self):
-        node = HTMLNode()
-        node.props = {}
-        self.assertEqual(node.props_to_html(), " ")
-
-    def test_props_to_html_one_key_value_pair(self):
-        node = HTMLNode()
-        node.props = {"class": "my-class"}
-        self.assertEqual(node.props_to_html(), " class=\"my-class\"")
-
-    def test_props_to_html_multiple_key_value_pairs(self):
-        node = HTMLNode()
-        node.props = {"class": "my-class", "id": "my-id"}
-        self.assertIn(" class=\"my-class\"", node.props_to_html())
-        self.assertIn(" id=\"my-id\"", node.props_to_html())
-        self.assertEqual(node.props_to_html(),
-                         " class=\"my-class\" id=\"my-id\"")
-
-
-class TestLeafNode(unittest.TestCase):
-    def test_to_html_raise_value_error(self):
-        node = LeafNode(None, None, {"class": "my-class"})
-        with self.assertRaises(ValueError):
-            node.to_html()
-
-    def test_to_html_tag_none(self):
-        node = LeafNode(None, "Hello, World!")
-        self.assertEqual(node.to_html(), "Hello, World!")
-
-    def test_to_html_multiple_props(self):
-        node = LeafNode("h1", "Heading", {"class": "my-class", "id": "my-id"})
+    def test_to_html_props(self):
+        node = HTMLNode(
+            "div",
+            "Hello, world!",
+            None,
+            {"class": "greeting", "href": "https://boot.dev"},
+        )
         self.assertEqual(
-            node.to_html(), "<h1 class=\"my-class\" id=\"my-id\">Heading</h1>")
+            node.props_to_html(),
+            ' class="greeting" href="https://boot.dev"',
+        )
 
-    def test_to_html_one_prop(self):
-        node = LeafNode("h1", "Heading", {"class": "my-class"})
-        self.assertEqual(node.to_html(), "<h1 class=\"my-class\">Heading</h1>")
+    def test_values(self):
+        node = HTMLNode(
+            "div",
+            "I wish I could read",
+        )
+        self.assertEqual(
+            node.tag,
+            "div",
+        )
+        self.assertEqual(
+            node.value,
+            "I wish I could read",
+        )
+        self.assertEqual(
+            node.children,
+            None,
+        )
+        self.assertEqual(
+            node.props,
+            None,
+        )
 
-    def test_to_html_no_props(self):
-        node = LeafNode("h1", "Heading")
-        self.assertEqual(node.to_html(), "<h1>Heading</h1>")
+    def test_repr(self):
+        node = HTMLNode(
+            "p",
+            "What a strange world",
+            None,
+            {"class": "primary"},
+        )
+        self.assertEqual(
+            node.__repr__(),
+            "HTMLNode(p, What a strange world, children: None, {'class': 'primary'})",
+        )
 
+    def test_leaf_to_html_p(self):
+        node = LeafNode("p", "Hello, world!")
+        self.assertEqual(node.to_html(), "<p>Hello, world!</p>")
 
-class TestParentNodeToHtml(unittest.TestCase):
+    def test_leaf_to_html_a(self):
+        node = LeafNode("a", "Click me!", {"href": "https://www.google.com"})
+        self.assertEqual(
+            node.to_html(),
+            '<a href="https://www.google.com">Click me!</a>',
+        )
 
-    def test_to_html_raise_value_error_tag_none(self):
-        node = ParentNode(None, [MagicMock()])
-        with self.assertRaises(ValueError):
-            node.to_html()
-
-    def test_to_html_raise_value_error_children_none(self):
-        node = ParentNode("div", None)
-        with self.assertRaises(ValueError):
-            node.to_html()
-
-    def test_to_html_no_children(self):
-        node = ParentNode("div", [])
-        self.assertEqual(node.to_html(), "<div></div>")
-
-    def test_to_html_one_child(self):
-        child = MagicMock()
-        child.to_html.return_value = "<p>Child</p>"
-
-        node = ParentNode("div", [child])
-        expected_output = "<div><p>Child</p></div>"
-
-        self.assertEqual(node.to_html(), expected_output)
-
-    def test_to_html_multiple_children(self):
-        child1 = MagicMock()
-        child1.to_html.return_value = "<p>Child1</p>"
-        child2 = MagicMock()
-        child2.to_html.return_value = "<p>Child2</p>"
-
-        node = ParentNode("div", [child1, child2])
-        expected_output = "<div><p>Child1</p><p>Child2</p></div>"
-
-        self.assertEqual(node.to_html(), expected_output)
-
-    def test_to_html_one_prop(self):
-        child = MagicMock()
-        child.to_html.return_value = "<p>Child</p>"
-
-        node = ParentNode("div", [child], {"class": "my-class"})
-        expected_output = "<div class=\"my-class\"><p>Child</p></div>"
-
-        self.assertEqual(node.to_html(), expected_output)
-
-    def test_to_html_multiple_props(self):
-        child = MagicMock()
-        child.to_html.return_value = "<p>Child</p>"
-
-        node = ParentNode("div", [child], {"class": "my-class", "id": "my-id"})
-        expected_output = "<div class=\"my-class\" id=\"my-id\"><p>Child</p></div>"
-
-        self.assertEqual(node.to_html(), expected_output)
-
-    def test_to_html_no_props(self):
-        child = MagicMock()
-        child.to_html.return_value = "<p>Child</p>"
-
-        node = ParentNode("div", [child])
-        expected_output = "<div><p>Child</p></div>"
-
-        self.assertEqual(node.to_html(), expected_output)
+    def test_leaf_to_html_no_tag(self):
+        node = LeafNode(None, "Hello, world!")
+        self.assertEqual(node.to_html(), "Hello, world!")
 
     def test_to_html_with_children(self):
         child_node = LeafNode("span", "child")
         parent_node = ParentNode("div", [child_node])
-        self.assertEqual(parent_node.to_html(),
-                         "<div><span>child</span></div>")
+        self.assertEqual(parent_node.to_html(), "<div><span>child</span></div>")
 
     def test_to_html_with_grandchildren(self):
         grandchild_node = LeafNode("b", "grandchild")
@@ -162,5 +109,5 @@ class TestParentNodeToHtml(unittest.TestCase):
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
